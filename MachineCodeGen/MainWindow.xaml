@@ -1,0 +1,14 @@
+﻿<Window x:Class="MachineCodeGen.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="机器特征码"
+        Width="400" Height="Auto" SizeToContent="Height"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Background="WhiteSmoke">
+    <StackPanel Orientation="Vertical">
+        <TextBox x:Name="TbMachineCode" Margin="10 10 10 10"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Width="70" Margin="10 0 10 10" Content="生成" Click="BtnCreate_OnClick"/>
+            <Button Width="70" Margin="0 0 10 10" Content="复制" Click="BtnCopy_OnClick"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
