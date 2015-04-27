@@ -3,7 +3,7 @@ namespace IT.License
 {
     public class DogFileId
     {
-        public const int CompressiCode = 1;
+        public const int CompressCode = 1;
         public const int DatabaseUserName = 2;
         public const int DatabasePassword = 3;
         public const int Aes = 4;

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace KeyWriter
@@ -17,12 +16,14 @@ namespace KeyWriter
         }
 
         private ObservableCollection<DogTypeViewModel> _dogTypes;
+        private ObservableCollection<ManufacturerViewModel> _manufacturers;
         private string _superDogGuid;
         private string _machineCode;
         private string _createDate;
         private string _updateDate;
         private string _expireDate;
         private int _manufacturerId;
+        private string _user;
         private string _remark;
 
         public ObservableCollection<DogTypeViewModel> DogTypes
@@ -35,6 +36,19 @@ namespace KeyWriter
             {
                 _dogTypes = value;
                 OnPropertyChanged("SuperDogTypes");
+            }
+        }
+
+        public ObservableCollection<ManufacturerViewModel> Manufacturers
+        {
+            get
+            {
+                return _manufacturers;
+            }
+            set
+            {
+                _manufacturers = value;
+                OnPropertyChanged("Manufacturers");
             }
         }
 
@@ -116,6 +130,19 @@ namespace KeyWriter
             }
         }
 
+        public string User
+        {
+            get
+            {
+                return _user;
+            }
+            set
+            {
+                _user = value;
+                OnPropertyChanged("User");
+            }
+        }
+
         public string Remark
         {
             get
@@ -132,6 +159,7 @@ namespace KeyWriter
         public KeyWriterViewModel()
         {
             _dogTypes = new ObservableCollection<DogTypeViewModel>();
+            _manufacturers = new ObservableCollection<ManufacturerViewModel>();
         }
     }
 
@@ -195,6 +223,54 @@ namespace KeyWriter
             _isIncluded = isIncluded;
             _typeValue = typeValue;
             _typeName = typeName;
+        }
+    }
+
+    public class ManufacturerViewModel : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
+        private int _id;
+        private string _name;
+
+        public int Id
+        {
+            get
+            {
+                return _id;
+            }
+            set
+            {
+                _id = value;
+                OnPropertyChanged("Id");
+            }
+        }
+
+        public string Name
+        {
+            get
+            {
+                return _name;
+            }
+            set
+            {
+                _name = value;
+                OnPropertyChanged("Name");
+            }
+        }
+
+        public ManufacturerViewModel(int id, string name)
+        {
+            _id = id;
+            _name = name;
         }
     }
 }

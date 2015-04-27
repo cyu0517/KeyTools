@@ -54,7 +54,7 @@
                                         <CheckBox IsChecked="{Binding IsIncluded, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
-                                <CheckBox/>
+                                <CheckBox x:Name="CbDogTypes" Click="CbDogTypes_OnClick"/>
                             </GridViewColumn>
                             <GridViewColumn Header="类型" Width="200">
                                 <GridViewColumn.CellTemplate>
@@ -83,6 +83,7 @@
                 <RowDefinition Height="30"/>
                 <RowDefinition Height="30"/>
                 <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
                 <RowDefinition Height="90"/>
                 <RowDefinition Height="30"/>
             </Grid.RowDefinitions>
@@ -100,7 +101,7 @@
 
             <Label Grid.Row="2" Grid.Column="0" Content="机器特征码:"/>
             <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3">
-                <TextBox Width="274"  Text="{Binding MachineCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBox Width="274" MaxLength="32" Text="{Binding MachineCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 <Button x:Name="BtnGetMachineCode" Content="使用超级狗中存储的特征码" Width="170" Margin="8 0 0 0" Click="ButtonBase_OnClick"/>
             </StackPanel>
 
@@ -116,15 +117,21 @@
             <DatePicker Grid.Row="5" Grid.Column="1" Text="{Binding ExpireDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
             <Label Grid.Row="6" Grid.Column="0" Content="厂商:"/>
-            <ComboBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3" Width="274" IsEditable="True"
-                      SelectedIndex="{Binding ManufacturerId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            <ComboBox x:Name="CbxManufacturer" Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3" Width="274" IsEditable="True"
+                      ItemsSource="{Binding Manufacturers, Mode=OneWay}" DisplayMemberPath="Name" SelectedValuePath="Id"
+                      SelectedValue="{Binding ManufacturerId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            </ComboBox>
 
-            <Label Grid.Row="7" Grid.Column="0" Content="备注:"/>
-            <TextBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" Width="463" Height="72"
+            <Label Grid.Row="7" Grid.Column="0" Content="用户:"/>
+            <TextBox Grid.Row="7" Grid.Column="1" Width="150" MaxLength="32"
+                      Text="{Binding User, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            
+            <Label Grid.Row="8" Grid.Column="0" Content="备注:"/>
+            <TextBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3" Width="463" Height="72"
                      TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
                      Text="{Binding Remark, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal"
+            <StackPanel Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal"
                         HorizontalAlignment="Right" VerticalAlignment="Bottom">
                 <StackPanel.Resources>
                     <Style TargetType="{x:Type Button}">

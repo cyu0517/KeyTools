@@ -1,5 +1,5 @@
 ﻿using System;
-using System.IO;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using IT.License;
@@ -13,6 +13,7 @@ namespace KeyWriter
     {
         private readonly KeyWriterViewModel _keyWriterViewModel;
         private LicenseHandler _licenseHandler;
+        private SuperDogDb _superDogDb;
 
         public KeyWriterWindow()
         {
@@ -35,6 +36,7 @@ namespace KeyWriter
             _keyWriterViewModel.UpdateDate = "";
             _keyWriterViewModel.ExpireDate = "";
             _keyWriterViewModel.ManufacturerId = 0;
+            _keyWriterViewModel.User = "";
             _keyWriterViewModel.Remark = "";
         }
 
@@ -82,14 +84,39 @@ namespace KeyWriter
             {
                 ClearViewModel();
 
+                var oldSuperDogGuid = _licenseHandler.GetSuperDogGuid();
+                if (!string.IsNullOrEmpty(oldSuperDogGuid))
+                {
+                    _superDogDb.RemoveSuperDog(oldSuperDogGuid);
+                }
+
                 if (_licenseHandler.Format(out message))
                 {
-                    // TODO 检索数据库，判断SuperDogGuid是否唯一
+                    string newSuperDogGuid;
 
-                    var superDogGuid = Guid.NewGuid().ToString().Replace("-", "");
-                    if (_licenseHandler.SetSuperDogGuid(superDogGuid))
+                    do
                     {
-                        _keyWriterViewModel.SuperDogGuid = superDogGuid;
+                        newSuperDogGuid = Guid.NewGuid().ToString().Replace("-", "");
+                        Thread.Sleep(200);
+                    } while (_superDogDb.GetSuperDog(newSuperDogGuid) != null);
+
+                    if (_licenseHandler.SetSuperDogGuid(newSuperDogGuid))
+                    {
+                        _keyWriterViewModel.SuperDogGuid = newSuperDogGuid;
+
+                        var superDogDate = _licenseHandler.GetSuperDogDate();
+
+                        var superDog = new SuperDog
+                            {
+                                SuperDogGuid = newSuperDogGuid,
+                                CreateDate = superDogDate.ToString("yyyy-MM-dd"),
+                                UpdateDate = superDogDate.ToString("yyyy-MM-dd")
+                            };
+
+                        superDog = _superDogDb.AddSuperDog(superDog);
+
+                        _keyWriterViewModel.CreateDate = superDog.CreateDate;
+                        _keyWriterViewModel.UpdateDate = superDog.UpdateDate;
                     }
                     else
                     {
@@ -119,8 +146,6 @@ namespace KeyWriter
 
                 _keyWriterViewModel.SuperDogGuid = _licenseHandler.GetSuperDogGuid();
                 _keyWriterViewModel.MachineCode = _licenseHandler.GetMachineCode();
-                _keyWriterViewModel.CreateDate = "";
-                _keyWriterViewModel.UpdateDate = "";
 
                 var expireDate = _licenseHandler.GetExpireDate();
                 if (expireDate != new DateTime(1970, 1, 1))
@@ -128,8 +153,15 @@ namespace KeyWriter
                     _keyWriterViewModel.ExpireDate = expireDate.ToString("yyyy-MM-dd");
                 }
 
-                _keyWriterViewModel.ManufacturerId = 0;
-                _keyWriterViewModel.Remark = "";
+                var superDog = _superDogDb.GetSuperDog(_keyWriterViewModel.SuperDogGuid);
+                if (superDog != null)
+                {
+                    _keyWriterViewModel.CreateDate = superDog.CreateDate;
+                    _keyWriterViewModel.UpdateDate = superDog.UpdateDate;
+                    _keyWriterViewModel.ManufacturerId = superDog.ManufacturerId;
+                    _keyWriterViewModel.User = superDog.User;
+                    _keyWriterViewModel.Remark = superDog.Remark;
+                }
 
                 MessageBox.Show("读取完成");
             }
@@ -182,10 +214,21 @@ namespace KeyWriter
 
             try
             {
+                Manufacturer manufacturer = null;
+                if (CbxManufacturer.SelectedIndex == -1 && !string.IsNullOrEmpty(CbxManufacturer.Text))
+                {
+                    manufacturer = _superDogDb.AddManufacturer(new Manufacturer {Name = CbxManufacturer.Text});
+                    if (manufacturer != null)
+                    {
+                        _keyWriterViewModel.Manufacturers.Add(new ManufacturerViewModel(manufacturer.Id, manufacturer.Name));
+                        _keyWriterViewModel.ManufacturerId = manufacturer.Id;
+                    }
+                }
+
                 var flagSetSuperDogType = _licenseHandler.SetSuperDogType(superDogType);
                 var flagSetMachineCode = _licenseHandler.SetMachineCode(_keyWriterViewModel.MachineCode);
                 var flagSetExpireDate = _licenseHandler.SetExpireDate(Convert.ToDateTime(_keyWriterViewModel.ExpireDate));
-                var flagSetManufacturerId = _licenseHandler.SetManufacturerId(0);
+                var flagSetManufacturerId = _licenseHandler.SetManufacturerId(manufacturer != null ? manufacturer.Id : 0);
 
                 if (!flagSetSuperDogType)
                 {
@@ -205,6 +248,23 @@ namespace KeyWriter
                 if (!flagSetManufacturerId)
                 {
                     MessageBox.Show("写入厂商发生错误");
+                }
+
+                if (flagSetSuperDogType && flagSetMachineCode && flagSetExpireDate && flagSetManufacturerId)
+                {
+                    var superDog = new SuperDog
+                    {
+                        SuperDogGuid = _keyWriterViewModel.SuperDogGuid,
+                        SuperDogType = superDogType,
+                        MachineCode = _keyWriterViewModel.MachineCode,
+                        UpdateDate = _licenseHandler.GetSuperDogDate().ToString("yyyy-MM-dd"),
+                        ExpireDate = _keyWriterViewModel.ExpireDate,
+                        ManufacturerId = _keyWriterViewModel.ManufacturerId,
+                        User = _keyWriterViewModel.User,
+                        Remark = _keyWriterViewModel.Remark
+                    };
+
+                    _superDogDb.ModifySuperDog(superDog);
                 }
 
                 MessageBox.Show("写入完成");
@@ -240,6 +300,35 @@ namespace KeyWriter
                     MessageBox.Show(message);
                     Close();
                 }
+
+                _superDogDb = new SuperDogDb("SuperDogDb.sqlite");
+
+                var manufacturers = _superDogDb.GetManufacturers();
+                if (manufacturers != null)
+                {
+                    foreach (var manufacturer in manufacturers)
+                    {
+                        _keyWriterViewModel.Manufacturers.Add(new ManufacturerViewModel(manufacturer.Id, manufacturer.Name));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void CbDogTypes_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                foreach (var dogType in _keyWriterViewModel.DogTypes)
+                {
+                    if (CbDogTypes.IsChecked != null)
+                    {
+                        dogType.IsIncluded = (bool) CbDogTypes.IsChecked;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -273,7 +362,7 @@ namespace KeyWriter
                     return;
                 }
 
-                var button = (Button)sender;
+                var button = (Button) sender;
 
                 switch (button.Name)
                 {

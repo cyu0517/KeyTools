@@ -31,12 +31,14 @@ namespace IT.License
 
         private bool CheckDogStatus()
         {
-            if (_dog == null || !_dog.IsLoggedIn() || !_dog.IsValid())
+            if (_dog != null)
             {
-                if (!Login())
-                {
-                    return false;
-                }
+                _dog.Logout();
+            }
+
+            if (!Login())
+            {
+                return false;
             }
 
             return true;
@@ -277,9 +279,9 @@ namespace IT.License
         /// 获取压缩码
         /// </summary>
         /// <returns>压缩码</returns>
-        public string GetCompressiCode()
+        public string GetCompressCode()
         {
-            return ReadFile(DogFileId.CompressiCode);
+            return ReadFile(DogFileId.CompressCode);
         }
 
         /// <summary>
@@ -414,9 +416,9 @@ namespace IT.License
         /// 设置压缩码
         /// </summary>
         /// <returns>是否成功</returns>
-        public bool SetCompressiCode(string compressiCode)
+        public bool SetCompressCode(string compressCode)
         {
-            return WriteFile(DogFileId.CompressiCode, compressiCode);
+            return WriteFile(DogFileId.CompressCode, compressCode);
         }
 
         /// <summary>
