@@ -2,6 +2,7 @@
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Windows;
+using Microsoft.Win32;
 
 namespace MachineCodeGen
 {
@@ -39,7 +40,24 @@ namespace MachineCodeGen
                     {
                         if (adapter.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
                         {
-                            codeString += adapter.GetPhysicalAddress();
+                            try
+                            {
+                                var registryKey = "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}\\" + adapter.Id + "\\Connection";
+                                var subKey = Registry.LocalMachine.OpenSubKey(registryKey, false);
+
+                                if (subKey != null)
+                                {
+                                    var pnpInstanceId = subKey.GetValue("PnpInstanceID", "").ToString();
+                                    if (pnpInstanceId.Length > 3 && "PCI".Equals(pnpInstanceId.Substring(0, 3)))
+                                    {
+                                        codeString += adapter.GetPhysicalAddress();
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                codeString += "";
+                            }
                         }
                     }
 

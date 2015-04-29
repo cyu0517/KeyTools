@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Text;
+using Microsoft.Win32;
 using SuperDog;
 using Sentinel.Ldk.LicGen;
 
@@ -568,7 +570,24 @@ namespace IT.License
                 {
                     if (adapter.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
                     {
-                        codeString += adapter.GetPhysicalAddress();
+                        try
+                        {
+                            var registryKey = "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}\\" + adapter.Id + "\\Connection";
+                            var subKey = Registry.LocalMachine.OpenSubKey(registryKey, false);
+
+                            if (subKey != null)
+                            {
+                                var pnpInstanceId = subKey.GetValue("PnpInstanceID", "").ToString();
+                                if (pnpInstanceId.Length > 3 && "PCI".Equals(pnpInstanceId.Substring(0, 3)))
+                                {
+                                    codeString += adapter.GetPhysicalAddress();
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            codeString += "";
+                        }
                     }
                 }
 
@@ -591,17 +610,86 @@ namespace IT.License
         }
 
         /// <summary>
+        /// 获取当前PC机器特征码
+        /// </summary>
+        /// <returns>当前PC机器特征码</returns>
+        public List<string> GetCurrentMachineCodeList()
+        {
+            var codeList = new List<string>();
+
+            try
+            {
+                var codeString = string.Empty;
+
+                var mc = new ManagementClass("Win32_BIOS");
+                var moc = mc.GetInstances();
+
+                foreach (ManagementObject mo in moc)
+                {
+                    codeString = mo.Properties["SerialNumber"].Value.ToString();
+                    break;
+                }
+
+                moc.Dispose();
+
+                codeString += "{0}";
+
+                mc = new ManagementClass("Win32_Processor");
+                moc = mc.GetInstances();
+                foreach (ManagementObject mo in moc)
+                {
+                    codeString += mo.Properties["ProcessorId"].Value.ToString();
+                    break;
+                }
+
+                moc.Dispose();
+
+                var adapters = NetworkInterface.GetAllNetworkInterfaces();
+                foreach (var adapter in adapters)
+                {
+                    if (adapter.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
+                    {
+                        try
+                        {
+                            var registryKey = "SYSTEM\\CurrentControlSet\\Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}\\" + adapter.Id + "\\Connection";
+                            var subKey = Registry.LocalMachine.OpenSubKey(registryKey, false);
+
+                            if (subKey != null)
+                            {
+                                var pnpInstanceId = subKey.GetValue("PnpInstanceID", "").ToString();
+                                if (pnpInstanceId.Length > 3 && "PCI".Equals(pnpInstanceId.Substring(0, 3)))
+                                {
+                                    codeList.Add(Md5.GetStringMd5(string.Format(codeString, adapter.GetPhysicalAddress())));
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            codeList.Add(Md5.GetStringMd5(codeString));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return codeList;
+        }
+
+        /// <summary>
         /// 判断当前PC机器特征码与超级狗中存储的机器特征码是否一致
         /// </summary>
         /// <returns></returns>
         public bool IsBindingMachine()
         {
             var machineCode = GetMachineCode();
-            var currentMachineCode = GetCurrentMachineCode();
+            var currentMachineCodeList = GetCurrentMachineCodeList();
 
             return !string.IsNullOrEmpty(machineCode)
-                && !string.IsNullOrEmpty(currentMachineCode)
-                && machineCode.Equals(currentMachineCode);
+                   && currentMachineCodeList.Count > 0
+                   && currentMachineCodeList.Contains(machineCode);
         }
 
         public void Dispose()
