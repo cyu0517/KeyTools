@@ -51,6 +51,7 @@ namespace MachineCodeGen
                                     if (pnpInstanceId.Length > 3 && "PCI".Equals(pnpInstanceId.Substring(0, 3)))
                                     {
                                         codeString += adapter.GetPhysicalAddress();
+                                        break;
                                     }
                                 }
                             }

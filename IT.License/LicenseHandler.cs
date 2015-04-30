@@ -77,7 +77,7 @@ namespace IT.License
             return Encoding.UTF8.GetString(buffer).Replace("\0", "");
         }
 
-        private bool WriteFile(int dogFileId, string content)
+        private bool WriteFile(int dogFileId, int dogFileSize, string content)
         {
             if (!CheckDogStatus())
             {
@@ -89,6 +89,11 @@ namespace IT.License
             if (dogFile == null || !dogFile.IsValid())
             {
                 return false;
+            }
+
+            if (content.Length < dogFileSize)
+            {
+                content = content.PadRight(dogFileSize, '\0');
             }
 
             var buffer = Encoding.UTF8.GetBytes(content);
@@ -420,7 +425,7 @@ namespace IT.License
         /// <returns>是否成功</returns>
         public bool SetCompressCode(string compressCode)
         {
-            return WriteFile(DogFileId.CompressCode, compressCode);
+            return WriteFile(DogFileId.CompressCode, DogFileSize.CompressCode, compressCode);
         }
 
         /// <summary>
@@ -429,7 +434,7 @@ namespace IT.License
         /// <returns>是否成功</returns>
         public bool SetDatabaseUserName(string databaseUserName)
         {
-            return WriteFile(DogFileId.DatabaseUserName, databaseUserName);
+            return WriteFile(DogFileId.DatabaseUserName, DogFileSize.DatabaseUserName, databaseUserName);
         }
 
         /// <summary>
@@ -438,7 +443,7 @@ namespace IT.License
         /// <returns>是否成功</returns>
         public bool SetDatabasePassword(string databasePassword)
         {
-            return WriteFile(DogFileId.DatabasePassword, databasePassword);
+            return WriteFile(DogFileId.DatabasePassword, DogFileSize.DatabasePassword, databasePassword);
         }
 
         /// <summary>
@@ -447,7 +452,7 @@ namespace IT.License
         /// <returns>是否成功</returns>
         public bool SetAes(string aes)
         {
-            return WriteFile(DogFileId.Aes, aes);
+            return WriteFile(DogFileId.Aes, DogFileSize.Aes, aes);
         }
 
         /// <summary>
@@ -456,7 +461,7 @@ namespace IT.License
         /// <returns>是否成功</returns>
         public bool SetSuperDogGuid(string superDogGuid)
         {
-            return WriteFile(DogFileId.SuperDogGuid, superDogGuid);
+            return WriteFile(DogFileId.SuperDogGuid, DogFileSize.SuperDogGuid, superDogGuid);
         }
 
         /// <summary>
@@ -465,7 +470,7 @@ namespace IT.License
         /// <returns>是否成功</returns>
         public bool SetSuperDogType(int superDogType)
         {
-            return WriteFile(DogFileId.SuperDogType, superDogType.ToString(CultureInfo.InvariantCulture));
+            return WriteFile(DogFileId.SuperDogType, DogFileSize.SuperDogType, superDogType.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>
@@ -474,7 +479,7 @@ namespace IT.License
         /// <returns>是否成功</returns>
         public bool SetManufacturerId(int manufacturerId)
         {
-            return WriteFile(DogFileId.ManufacturerId, Convert.ToString(manufacturerId, 16));
+            return WriteFile(DogFileId.ManufacturerId, DogFileSize.ManufacturerId, Convert.ToString(manufacturerId, 16));
         }
 
         /// <summary>
@@ -483,7 +488,7 @@ namespace IT.License
         /// <returns>是否成功</returns>
         public bool SetExpireDate(DateTime expireDate)
         {
-            return WriteFile(DogFileId.ExpireDate, expireDate.ToString("yyyyMMdd"));
+            return WriteFile(DogFileId.ExpireDate, DogFileSize.ExpireDate, expireDate.ToString("yyyyMMdd"));
         }
 
         /// <summary>
@@ -492,7 +497,7 @@ namespace IT.License
         /// <returns>是否成功</returns>
         public bool SetMachineCode(string machineCode)
         {
-            return WriteFile(DogFileId.MachineCode, machineCode);
+            return WriteFile(DogFileId.MachineCode, DogFileSize.MachineCode, machineCode);
         }
 
         /// <summary>
@@ -581,6 +586,7 @@ namespace IT.License
                                 if (pnpInstanceId.Length > 3 && "PCI".Equals(pnpInstanceId.Substring(0, 3)))
                                 {
                                     codeString += adapter.GetPhysicalAddress();
+                                    break;
                                 }
                             }
                         }
